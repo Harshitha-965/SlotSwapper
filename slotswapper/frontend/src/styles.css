@@ -630,3 +630,247 @@ input:focus {
     padding: 1.5rem;
   }
 }
+
+/* ================================
+   SWAP MODAL STYLING
+   ================================ */
+
+.swap-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 60;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.swap-modal-card {
+  background: #1a1a1e;
+  border: 1px solid #2a2a2c;
+  border-radius: 20px;
+  padding: 2rem;
+  width: 420px;
+  color: #fff;
+  box-shadow: 0 0 25px rgba(255, 106, 0, 0.25);
+  animation: slideIn 0.4s ease;
+}
+
+.swap-modal-card h2 {
+  font-size: 1.5rem;
+  color: #ff7b00;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.swap-section {
+  background: #121216;
+  border: 1px solid #2a2a2c;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.swap-section .label {
+  color: #b3b3b3;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.swap-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.swap-section .subtext {
+  color: #a6a6a6;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.swap-section .owner {
+  color: #ff7b00;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.swap-select {
+  width: 100%;
+  padding: 0.75rem;
+  background: #121212;
+  border: 1px solid #2a2a2c;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.swap-select:focus {
+  outline: none;
+  border-color: #ff7b00;
+  box-shadow: 0 0 6px rgba(255, 123, 0, 0.4);
+}
+
+/* Modal Actions */
+.swap-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.swap-btn-cancel {
+  background: #2a2a2c;
+  color: #ddd;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.swap-btn-cancel:hover {
+  background: #3a3a3c;
+}
+
+.swap-btn-confirm {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.swap-btn-confirm:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.4);
+}
+
+.swap-btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================================
+   REQUESTS PAGE STYLING
+   ================================ */
+
+.tabs-container {
+  margin-top: 1rem;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  background: #1a1a1d;
+  color: #b3b3b3;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  border: 1px solid #2a2a2c;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  color: #fff;
+  border-color: #ff7b00;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.3);
+}
+
+.tab-content.hidden {
+  display: none;
+}
+
+.badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: #ff7b00;
+  color: #fff;
+}
+
+.badge-accepted {
+  background: #10b981;
+  color: #fff;
+}
+
+.badge-rejected {
+  background: #ef4444;
+  color: #fff;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 25px;
+  background: #1f1f22;
+  color: #b3b3b3;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 153, 0, 0.3);
+}
+
+.swap-block {
+  background: #0b0b0d;
+  border: 1px solid #2a2a2c;
+  border-radius: 12px;
+  padding: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: #ff7b00;
+  color: white;
+}
+
+.badge-accepted {
+  background: #10b981;
+  color: white;
+}
+
+.badge-rejected {
+  background: #ef4444;
+  color: white;
+}

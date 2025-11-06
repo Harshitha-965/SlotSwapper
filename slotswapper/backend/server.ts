@@ -6,6 +6,9 @@ dotenv.config();
 import cors from "cors";
 import authRoutes from "./routes/auth";
 import eventRoutes from "./routes/eventRoutes";
+import swapRequestRoutes from "./routes/swapRequestRoutes"; // ✅ add this line
+
+
 
 // ✅ Load environment variables
 //dotenv.config();
@@ -26,6 +29,7 @@ app.use(
 // ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/requests", swapRequestRoutes);
 
 // ✅ Health check route
 app.get("/", (req: Request, res: Response) => {

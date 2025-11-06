@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import LoginSignup from "./pages/LoginSignup.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Marketplace from "./pages/Marketplace.tsx";
+import Requests from "./pages/Requests.tsx";
 
 const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -65,6 +66,14 @@ const App: React.FC = () => {
         element={
           <PrivateRoute>
             <Marketplace />  
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/requests"
+        element={
+          <PrivateRoute>
+            <Requests />
           </PrivateRoute>
         }
       />
