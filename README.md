@@ -39,6 +39,7 @@ Authentication	  |     JWT (JSON Web Tokens)
 Tools	            |     Postman, Git, GitHub
 
 🧠 Folder Structure
+```
 
 📦 SlotSwapper
 ├── 📁 frontend                # Frontend
@@ -66,16 +67,17 @@ Tools	            |     Postman, Git, GitHub
 │
 └── README.md
 
+```
 🧩 Core Features
 
-✅ User Authentication (JWT) – Secure login and signup.
-✅ Dashboard – Create, delete, and manage your personal event slots.
-✅ Swappable Slots – Toggle between Busy and Swappable states.
-✅ Marketplace – View other users’ available swappable events.
-✅ Swap Requests – Send and manage swap requests between users.
-✅ Accept / Reject System – Respond to incoming requests with one click.
-✅ Automatic Event Replacement – When a swap is accepted, both users’ dashboards update automatically.
-✅ Responsive Design – Works smoothly across various screen sizes.
+- User Authentication (JWT) – Secure login and signup.
+- Dashboard – Create, delete, and manage your personal event slots.
+- Swappable Slots – Toggle between Busy and Swappable states.
+- Marketplace – View other users’ available swappable events.
+- Swap Requests – Send and manage swap requests between users.
+- Accept / Reject System – Respond to incoming requests with one click.
+- Automatic Event Replacement – When a swap is accepted, both users’ dashboards update automatically.
+- Responsive Design – Works smoothly across various screen sizes.
 
 🛠️ Setup Instructions
 
@@ -114,6 +116,7 @@ npm run dev
 Then open 👉 http://localhost:5173 in your browser.
 
 🧭 API Endpoints
+```
 
 Method	 Endpoint	                    Description	
 POST	  /api/auth/signup	         Register a new user	
@@ -130,6 +133,7 @@ PATCH	  /api/requests/:id/accept	 Accept a swap request (auto-updates dashboards
 PATCH	  /api/requests/:id/reject	 Reject a swap request	
 DELETE	/api/requests/:id	         Delete a swap request	
 
+```
 💬 Assumptions
 
 - A user can mark multiple events as Swappable but only swap one at a time.
