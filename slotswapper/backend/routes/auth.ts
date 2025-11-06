@@ -6,6 +6,21 @@ import jwt from "jsonwebtoken";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key_here"; // Make sure this is set in .env
 
+/** ✅ Token validation route */
+router.get("/validate", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ valid: false, message: "Missing token" });
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return res.json({ valid: true, user: decoded });
+  } catch (err) {
+    return res.status(401).json({ valid: false, message: "Invalid or expired token" });
+  }
+});
+
 // ✅ Signup Route
 router.post("/signup", async (req: Request, res: Response) => {
   try {
