@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { Input } from "../components/ui/Input.tsx";
 import { Label } from "../components/ui/Label.tsx";
 import { signup, login } from "../api/auth.ts";
+import { useNavigate } from "react-router-dom";
 
 interface LoginSignupProps {
   onLogin: () => void;
 }
 
 const LoginSignup: React.FC<LoginSignupProps> = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,7 @@ const LoginSignup: React.FC<LoginSignupProps> = ({ onLogin }) => {
     setMessage("");
     try {
       const response = await signup({ name, email, password });
+      console.log("Signup response:", response);
       if (response.success) {
         setMessage("Signup successful! Please login.");
         setIsSignup(false);
@@ -26,7 +29,8 @@ const LoginSignup: React.FC<LoginSignupProps> = ({ onLogin }) => {
         setEmail("");
         setPassword("");
       } else setMessage(response.message);
-    } catch {
+    } catch (err) {
+      console.error("Signup error:", err);
       setMessage("Signup failed. Try again.");
     }
   };
@@ -36,12 +40,29 @@ const LoginSignup: React.FC<LoginSignupProps> = ({ onLogin }) => {
     setMessage("");
     try {
       const response = await login({ email, password });
+      console.log("Login response:", response);
       if (response.success && response.token) {
+        // Save token + user info
         localStorage.setItem("token", response.token);
+        if (response.user) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+        }
+
+        console.log("Token saved to localStorage:", localStorage.getItem("token"));
+
         setMessage("Login successful!");
         onLogin();
-      } else setMessage(response.message);
-    } catch {
+
+        Promise.resolve().then(() => {
+          console.log("Navigating now to /dashboard");
+          navigate("/dashboard", { replace: true });
+        });
+      } else {
+        console.log("Login failed message:", response.message);
+        setMessage(response.message);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
       setMessage("Login failed. Try again.");
     }
   };

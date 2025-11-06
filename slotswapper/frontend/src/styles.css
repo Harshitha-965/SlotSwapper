@@ -200,3 +200,433 @@ input:focus {
     width: 100%;
   }
 }
+
+/* ================================
+   DASHBOARD + SIDEBAR THEME
+   ================================ */
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at top left, #1a1a1d, #0b0b0d);
+  color: white;
+  font-family: "Poppins", sans-serif;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #141416 0%, #0b0b0d 100%);
+  border-right: 1px solid #2a2a2c;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1.2rem;
+  border-bottom: 1px solid #2a2a2c;
+}
+
+.sidebar-header img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.sidebar-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.sidebar-header span {
+  color: #ff7b00;
+}
+
+.sidebar nav {
+  flex: 1;
+  padding: 1.5rem 1rem;
+}
+
+.sidebar nav button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #a6a6a6;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  text-align: left;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.sidebar nav button:hover {
+  background: #1a1a1d;
+  color: white;
+}
+
+.sidebar nav button.active {
+  background: #1a1a1d;
+  color: white;
+  border-left: 3px solid #ff7b00;
+}
+
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #2a2a2c;
+}
+
+.sidebar-footer .user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-footer .user-info .avatar {
+  width: 40px;
+  height: 40px;
+  background: #1a1a1d;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-footer .user-info span {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.sidebar-footer button {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #a6a6a6;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sidebar-footer button:hover {
+  background: #1a1a1d;
+  color: white;
+}
+
+/* Main Dashboard Area */
+.dashboard-main {
+  flex: 1;
+  padding: 2.5rem;
+  overflow-y: auto;
+}
+
+.dashboard-main h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+.dashboard-main h1 span {
+  color:#ff7b00;
+}
+
+.dashboard-main p {
+  color: #b3b3b3;
+  margin-bottom: 1.5rem;
+}
+
+/* ================================
+   EVENT CARD STYLING (Enhanced)
+   ================================ */
+
+.event-grid {
+  padding-top:16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.event-card {
+  background: #18181a;
+  border: 1px solid #2a2a2c;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 18px rgba(255, 153, 0, 0.25);
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.event-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.event-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  text-transform: capitalize;
+}
+
+.event-status.busy {
+  background: #2e2e2f;
+  color: #cccccc;
+}
+
+.event-status.swappable {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.event-details p {
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  margin: 0.4rem 0;
+}
+
+.event-details strong {
+  color: #ff7b00;
+}
+
+.event-toggle-btn {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  background: #1f1f22;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.event-toggle-btn:hover {
+  background: #2a2a2c;
+  transform: scale(1.03);
+}
+
+/* ================================
+   EVENT ACTION BUTTONS (Delete + Hover)
+   ================================ */
+
+.event-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.event-toggle-btn {
+  flex: 1;
+  padding: 0.6rem;
+  background: #1f1f22;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.event-toggle-btn:hover {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(255, 153, 0, 0.3);
+}
+
+.event-delete-btn {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  margin-top:10px;
+}
+
+.event-delete-btn:hover {
+  color: #ff5252;
+  background: #1f1f22;
+  transform: scale(1.1);
+}
+
+
+/* Add Button */
+.add-event-btn {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  border: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-event-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 153, 0, 0.3);
+}
+
+/* ================================
+   ADD EVENT MODAL STYLING
+   ================================ */
+
+.add-event-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.add-event-card {
+  background: #1a1a1e;
+  border: 1px solid #2a2a2c;
+  border-radius: 20px;
+  padding: 2rem 2rem 1.5rem;
+  width: 400px;
+  color: #fff;
+  box-shadow: 0 0 30px rgba(255, 106, 0, 0.25);
+  animation: slideIn 0.4s ease;
+}
+
+.add-event-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ff7b00;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Input groups inside modal */
+.add-event-card label {
+  display: block;
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  margin-bottom: 0.4rem;
+}
+
+.add-event-card input,
+.add-event-card select {
+  width: 100%;
+  padding: 0.7rem;
+  background: #121212;
+  border: 1px solid #2a2a2c;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.add-event-card input:focus,
+.add-event-card select:focus {
+  outline: none;
+  border-color: #ff7b00;
+  box-shadow: 0 0 6px rgba(255, 123, 0, 0.5);
+}
+
+/* Modal buttons */
+.add-event-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.8rem;
+}
+
+.add-event-btn-cancel {
+  background: #2a2a2c;
+  color: #ddd;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-event-btn-cancel:hover {
+  background: #3a3a3c;
+}
+
+.add-event-btn-save {
+  background: linear-gradient(90deg, #ff7b00, #ff9900);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-event-btn-save:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-15px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Modal */
+@media (max-width: 480px) {
+  .add-event-card {
+    width: 90%;
+    padding: 1.5rem;
+  }
+}

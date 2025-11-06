@@ -5,6 +5,10 @@ const API_URL = "http://localhost:5000"; // your backend URL
 interface AuthResponse {
   success: boolean;
   message: string;
+  user?: {           // ✅ add this line
+    name: string;
+    email: string;
+  };
   token?: string; // if you return JWT
 }
 
