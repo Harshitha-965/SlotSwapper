@@ -9,6 +9,8 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminAttendance from "./pages/AdminAttendance.tsx";
 import AdminMondayOrder from "./pages/AdminMondayOrder.tsx";
 import AdminSwaps from "./pages/AdminSwaps.tsx";
+import MyEvents from "./pages/MyEvents.tsx";
+import Settings from "./pages/Settings.tsx";
 
 interface PrivateRouteProps {
   children: React.ReactElement;
@@ -182,6 +184,18 @@ const App: React.FC = () => {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/my-events"
+        element={
+          <PrivateRoute allowedRole="Faculty">
+            <MyEvents
+              onLogout={
+                handleLogout
+              }
+            />
+          </PrivateRoute>
+        }
+      />
 
       {/* Faculty Marketplace */}
       <Route
@@ -198,7 +212,20 @@ const App: React.FC = () => {
         path="/requests"
         element={
           <PrivateRoute allowedRole="Faculty">
-            <Requests />
+            <Requests 
+              onLogout={handleLogout}
+            />
+          </PrivateRoute>
+        }
+      />
+      {/* Faculty Settings */}
+      <Route
+        path="/settings"
+        element={
+          <PrivateRoute allowedRole="Faculty">
+            <Settings
+              onLogout={handleLogout}
+            />
           </PrivateRoute>
         }
       />

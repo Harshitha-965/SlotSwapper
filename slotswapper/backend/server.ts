@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth";
 import eventRoutes from "./routes/eventRoutes";
 import swapRequestRoutes from "./routes/swapRequestRoutes"; // ✅ add this line
 import adminRoutes from "./routes/adminRoutes";
+import timetableRoutes from "./routes/timetableRoutes";
+import attendanceRoutes from "./routes/attendanceRoutes";
 
 
 // ✅ Load environment variables
@@ -31,6 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/requests", swapRequestRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/timetable", timetableRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // ✅ Health check route
 app.get("/", (req: Request, res: Response) => {

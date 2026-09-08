@@ -1,246 +1,599 @@
-import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar.tsx";
-import AddEventModal from "../components/AddEventModal.tsx";
-import { useNavigate } from "react-router-dom";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  BookOpen,
+  Clock,
+  Users,
+  MapPin,
+  AlertCircle,
+  Check,
+} from "lucide-react";
+
+import FacultyLayout from "../components/FacultyLayout.tsx";
+
+import {
+  getMyTimetable,
+} from "../api/timetable.ts";
+
+import type {
+  DaySchedule,
+  Period,
+} from "../api/timetable.ts";
+
+import {
+  getTodayAttendance,
+  markAttendanceCompleted,
+} from "../api/attendance.ts";
+
+import type {
+  AttendanceResponse,
+} from "../api/attendance.ts";
 
 interface DashboardProps {
   onLogout: () => void;
 }
 
-interface EventType {
-  _id?: string;
-  id?: number;
-  title: string;
-  start: string;
-  end: string;
-  status: string;
-}
+const Dashboard: React.FC<DashboardProps> = ({
+  onLogout,
+}) => {
+  const [schedule, setSchedule] =
+    useState<DaySchedule[]>([]);
 
-const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
-  const [userName, setUserName] = useState<string>("User");
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const navigate = useNavigate();
+  const [attendance, setAttendance] =
+    useState<AttendanceResponse[]>([]);
+
+  const [userName, setUserName] =
+    useState("Faculty");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [now, setNow] =
+    useState(new Date());
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
+    const userString =
+      localStorage.getItem("user");
+
+    if (userString) {
       try {
-        const parsed = JSON.parse(user);
-        setUserName(parsed.name || "User");
-      } catch (err) {
-        console.error("Error parsing user data:", err);
+        const user =
+          JSON.parse(userString);
+
+        setUserName(
+          user.name || "Faculty"
+        );
+      } catch {
+        setUserName("Faculty");
       }
     }
   }, []);
 
-  /** ✅ Fetch events from backend */
-  const fetchEvents = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch("http://localhost:5000/api/events/mine", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch events");
-      const data = await res.json();
-      setEvents(data);
-    } catch (err) {
-      console.error("Error fetching events:", err);
-    }
-  };
-
   useEffect(() => {
-    fetchEvents();
+    const loadData =
+      async () => {
+        try {
+          setLoading(true);
+          setError("");
+
+          const [
+            timetable,
+            todayAttendance,
+          ] = await Promise.all([
+            getMyTimetable(),
+            getTodayAttendance(),
+          ]);
+
+          setSchedule(
+            timetable.schedule
+          );
+
+          setAttendance(
+            todayAttendance
+          );
+        } catch (err: unknown) {
+          console.error(err);
+
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load dashboard"
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    loadData();
   }, []);
 
-  /** ✅ Add new event (save to DB) */
-  const handleAddEvent = async (newEvent: Omit<EventType, "id">) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+  /*
+   * Keep the 10-minute button
+   * live without page refresh.
+   */
+  useEffect(() => {
+    const interval =
+      setInterval(() => {
+        setNow(new Date());
+      }, 15000);
 
-      const res = await fetch("http://localhost:5000/api/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newEvent),
-      });
+    return () =>
+      clearInterval(interval);
+  }, []);
 
-      if (!res.ok) throw new Error("Failed to add event");
+  const currentDay =
+    useMemo(() => {
+      const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
 
-      await res.json();
-      await fetchEvents(); // ✅ Refresh list after adding
-      setShowAddEventModal(false);
-    } catch (err) {
-      console.error("Error adding event:", err);
-    }
+      return days[now.getDay()];
+    }, [now]);
+
+  const todaySchedule =
+    useMemo(() => {
+      if (
+        currentDay ===
+        "Sunday"
+      ) {
+        return null;
+      }
+
+      return (
+        schedule.find(
+          (day) =>
+            day.day ===
+            currentDay
+        ) || null
+      );
+    }, [
+      schedule,
+      currentDay,
+    ]);
+
+  const totalClasses =
+    todaySchedule?.periods.filter(
+      (period) =>
+        !period.isFree
+    ).length || 0;
+
+  const swappableSlots =
+    todaySchedule?.periods.filter(
+      (period) =>
+        period.status ===
+        "Swappable"
+    ).length || 0;
+
+  const emergencySwaps =
+    todaySchedule?.periods.filter(
+      (period) =>
+        period.status ===
+        "Emergency"
+    ).length || 0;
+
+  const isCompleted = (
+    periodNumber: number
+  ) => {
+    return attendance.some(
+      (record) =>
+        record.attendance?.periodNumber ===
+        periodNumber &&
+        record.attendance?.status ===
+        "Present"
+    );
   };
 
-  /** ✅ Toggle event status (Busy ↔ Swappable) */
-  const toggleStatus = async (id: string | number | undefined, currentStatus: string) => {
-    if (!id) return;
-    const newStatus = currentStatus === "Busy" ? "Swappable" : "Busy";
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch(`http://localhost:5000/api/events/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update status");
-
-      await res.json();
-      await fetchEvents(); // ✅ Refresh list after status change
-    } catch (err) {
-      console.error("Error updating event:", err);
+  const canMarkComplete = (
+    period: Period
+  ) => {
+    if (period.isFree) {
+      return false;
     }
+
+    if (
+      isCompleted(
+        period.period
+      )
+    ) {
+      return false;
+    }
+
+    const [
+      hours,
+      minutes,
+    ] =
+      period.endTime
+        .split(":")
+        .map(Number);
+
+    const endTime =
+      new Date(now);
+
+    endTime.setHours(
+      hours,
+      minutes,
+      0,
+      0
+    );
+
+    const tenMinutesAfter =
+      new Date(
+        endTime.getTime() +
+          10 * 60 * 1000
+      );
+
+    return (
+      now >= endTime &&
+      now <=
+        tenMinutesAfter
+    );
   };
 
-  /** ✅ Delete event from DB */
-  const handleDelete = async (id: string | number | undefined) => {
-    if (!id) return;
+  const handleMarkCompleted =
+    async (
+      period: Period
+    ) => {
+      try {
+        await markAttendanceCompleted(
+          period.period
+        );
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+        const updated =
+          await getTodayAttendance();
 
-      const res = await fetch(`http://localhost:5000/api/events/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        setAttendance(
+          updated
+        );
+      } catch (err: unknown) {
+        alert(
+          err instanceof Error
+            ? err.message
+            : "Unable to mark attendance"
+        );
+      }
+    };
 
-      if (!res.ok) throw new Error("Failed to delete event");
-
-      await fetchEvents(); // ✅ Refresh list after delete
-    } catch (err) {
-      console.error("Error deleting event:", err);
-    }
-  };
+  if (loading) {
+    return (
+      <FacultyLayout
+        currentPage="dashboard"
+        onLogout={onLogout}
+      >
+        <div className="faculty-loading">
+          Loading dashboard...
+        </div>
+      </FacultyLayout>
+    );
+  }
 
   return (
-    <div className="dashboard-container">
-      {/* Sidebar */}
-      <Sidebar
-        onLogout={onLogout}
-        onNavigate={(page) => navigate("/" + page)} // ✅ navigation fixed
-        currentPage="dashboard"
-      />
+    <FacultyLayout
+      currentPage="dashboard"
+      onLogout={onLogout}
+    >
+      <div className="faculty-dashboard-page">
+        <div className="faculty-page-heading">
+          <h1>
+            Welcome back,{" "}
+            <span>
+              {userName}
+            </span>
+            !
+          </h1>
 
-      {/* Main Dashboard */}
-      <div className="dashboard-main">
-        <h1>
-          Welcome, <span>{userName} 👋</span>
-        </h1>
-        <p>Here’s your schedule overview and event management panel.</p>
-
-        {/* Title + Button Row */}
-        <div
-          className="mb-6"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-          }}
-        >
-          <h2
-            className="text-xl font-semibold"
-            style={{
-              margin: 0,
-              flex: "1",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Your Events
-          </h2>
-
-          <button
-            onClick={() => setShowAddEventModal(true)}
-            className="add-event-btn"
-            style={{
-              flexShrink: 0,
-              marginRight: "5rem",
-            }}
-          >
-            + Add Event
-          </button>
+          <p>
+            {currentDay ===
+            "Sunday"
+              ? "No classes today. Enjoy your day off!"
+              : `Here's your schedule for ${currentDay}`}
+          </p>
         </div>
 
-        {/* ✅ Events Grid */}
-        <div className="event-grid">
-          {events.length > 0 ? (
-            events.map((event) => (
-              <div key={event._id || event.id} className="event-card">
-                <div className="event-header">
-                  <h3>{event.title}</h3>
-                  <span
-                    className={`event-status ${
-                      event.status === "Busy" ? "busy" : "swappable"
-                    }`}
-                  >
-                    {event.status}
-                  </span>
+        {error && (
+          <div className="faculty-error">
+            {error}
+          </div>
+        )}
+
+        {!todaySchedule &&
+        currentDay !==
+          "Sunday" ? (
+          <div className="faculty-empty-card">
+            <h2>
+              Timetable not configured
+            </h2>
+
+            <p>
+              Your weekly timetable
+              has not been configured
+              yet.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="faculty-stat-grid">
+              <div className="faculty-stat-card">
+                <div>
+                  <p>
+                    Total Classes Today
+                  </p>
+
+                  <strong>
+                    {totalClasses}
+                  </strong>
                 </div>
 
-                <div className="event-details">
-                  <p>
-                    <strong>Start:</strong>{" "}
-                    {new Date(event.start).toLocaleString().replace(",", "")}
-                  </p>
-                  <p>
-                    <strong>End:</strong>{" "}
-                    {new Date(event.end).toLocaleString().replace(",", "")}
-                  </p>
-                </div>
-
-                <div className="event-actions">
-                  <button
-                    onClick={() => toggleStatus(event._id, event.status)}
-                    className="event-toggle-btn"
-                  >
-                    {event.status === "Busy"
-                      ? "Make Swappable"
-                      : "Revert to Busy"}
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(event._id)}
-                    className="event-delete-btn"
-                    title="Delete Event"
-                  >
-                    🗑
-                  </button>
+                <div className="faculty-stat-icon orange">
+                  <BookOpen
+                    size={24}
+                  />
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center col-span-full">
-              No events added yet. Click “+ Add Event” to create one.
-            </p>
-          )}
+
+              <div className="faculty-stat-card">
+                <div>
+                  <p>
+                    Swappable Slots
+                  </p>
+
+                  <strong>
+                    {swappableSlots}
+                  </strong>
+                </div>
+
+                <div className="faculty-stat-icon blue">
+                  🔄
+                </div>
+              </div>
+
+              <div className="faculty-stat-card">
+                <div>
+                  <p>
+                    Emergency Swaps
+                  </p>
+
+                  <strong>
+                    {emergencySwaps}
+                  </strong>
+                </div>
+
+                <div className="faculty-stat-icon red">
+                  <AlertCircle
+                    size={24}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {todaySchedule ? (
+              <section className="faculty-schedule-card">
+                <div className="faculty-section-heading">
+                  <h2>
+                    Today's Schedule
+                  </h2>
+
+                  <p>
+                    All 7 periods for{" "}
+                    {currentDay}
+                  </p>
+                </div>
+
+                <div className="faculty-period-list">
+                  {todaySchedule.periods.map(
+                    (period) => {
+                      const completed =
+                        isCompleted(
+                          period.period
+                        );
+
+                      const active =
+                        canMarkComplete(
+                          period
+                        );
+
+                      return (
+                        <div
+                          key={
+                            period.id
+                          }
+                          className={
+                            period.isFree
+                              ? "faculty-period-card free"
+                              : period.status ===
+                                "Emergency"
+                              ? "faculty-period-card emergency"
+                              : "faculty-period-card"
+                          }
+                        >
+                          <div className="faculty-period-info">
+                            <div className="faculty-period-top">
+                              <div>
+                                <span className="faculty-period-number">
+                                  Period{" "}
+                                  {
+                                    period.period
+                                  }
+                                </span>
+
+                                <h3>
+                                  {period.isFree
+                                    ? "Free Period"
+                                    : period.subject}
+                                </h3>
+                              </div>
+
+                              {!period.isFree && (
+                                <div className="faculty-period-badges">
+                                  {period.status ===
+                                    "Swappable" && (
+                                    <span className="faculty-badge swappable">
+                                      Swappable
+                                    </span>
+                                  )}
+
+                                  {period.status ===
+                                    "Busy" && (
+                                    <span className="faculty-badge busy">
+                                      Busy
+                                    </span>
+                                  )}
+
+                                  {period.status ===
+                                    "Emergency" && (
+                                    <span className="faculty-badge emergency">
+                                      🚨 Emergency
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="faculty-period-details">
+                              <span>
+                                <Clock
+                                  size={16}
+                                />
+
+                                {
+                                  period.startTime
+                                }{" "}
+                                -{" "}
+                                {
+                                  period.endTime
+                                }
+                              </span>
+
+                              {!period.isFree && (
+                                <>
+                                  <span>
+                                    <Users
+                                      size={16}
+                                    />
+
+                                    {
+                                      period.class
+                                    }
+                                  </span>
+
+                                  {period.room && (
+                                    <span>
+                                      <MapPin
+                                        size={16}
+                                      />
+
+                                      {
+                                        period.room
+                                      }
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {!period.isFree && (
+                            <div className="faculty-complete-area">
+                              <button
+                                disabled={
+                                  !active &&
+                                  !completed
+                                }
+                                onClick={() =>
+                                  handleMarkCompleted(
+                                    period
+                                  )
+                                }
+                                className={
+                                  completed
+                                    ? "faculty-complete-btn completed"
+                                    : active
+                                    ? "faculty-complete-btn active"
+                                    : "faculty-complete-btn"
+                                }
+                              >
+                                <Check
+                                  size={18}
+                                />
+
+                                {completed
+                                  ? "Completed"
+                                  : "Mark Completed"}
+                              </button>
+
+                              {!completed &&
+                                !active && (
+                                  <small>
+                                    Available only
+                                    from class end
+                                    until 10 minutes
+                                    after
+                                  </small>
+                                )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              </section>
+            ) : (
+              <div className="faculty-empty-card">
+                <BookOpen
+                  size={50}
+                />
+
+                <h2>
+                  No Classes Today
+                </h2>
+
+                <p>
+                  Enjoy your day off!
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="faculty-tips-card">
+          <h3>
+            Quick Tips
+          </h3>
+
+          <p>
+            • Mark Completed becomes
+            active immediately after
+            the class ends and remains
+            available for 10 minutes.
+          </p>
+
+          <p>
+            • Attendance is automatically
+            saved when you mark a class
+            completed.
+          </p>
+
+          <p>
+            • Go to My Events to manage
+            Busy, Swappable and Emergency
+            availability.
+          </p>
         </div>
       </div>
-
-      {/* Modal */}
-      {showAddEventModal && (
-        <AddEventModal
-          onClose={() => setShowAddEventModal(false)}
-          onSave={handleAddEvent}
-        />
-      )}
-    </div>
+    </FacultyLayout>
   );
 };
 

@@ -1,74 +1,156 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import mongoose, {
+  Document,
+  Schema,
+  Model,
+} from "mongoose";
 
-export interface IAttendance extends Document {
-  facultyId: mongoose.Types.ObjectId;
-  date: Date;
-  day: string;
+export type AcademicDay =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday";
+
+export interface IPeriod {
   periodNumber: number;
   subject: string;
+  startTime: string;
+  endTime: string;
   className: string;
   room?: string;
-  completionTimestamp?: Date;
-  status: "Present" | "Absent" | "Free";
+}
+
+export interface IDaySchedule {
+  day: AcademicDay;
+  periods: IPeriod[];
+}
+
+export interface ITimetable extends Document {
+  facultyId: mongoose.Types.ObjectId;
+  college: string;
+  schedule: IDaySchedule[];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-const AttendanceSchema: Schema<IAttendance> = new Schema(
-  {
-    facultyId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+const PeriodSchema =
+  new Schema<IPeriod>(
+    {
+      periodNumber: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 7,
+      },
+
+      subject: {
+        type: String,
+        required: true,
+        default: "",
+      },
+
+      startTime: {
+        type: String,
+        required: true,
+      },
+
+      endTime: {
+        type: String,
+        required: true,
+      },
+
+      className: {
+        type: String,
+        required: true,
+        default: "",
+      },
+
+      room: {
+        type: String,
+        default: "",
+      },
+    },
+    {
+      _id: false,
+    }
+  );
+
+const DayScheduleSchema =
+  new Schema<IDaySchedule>(
+    {
+      day: {
+        type: String,
+        enum: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+        required: true,
+      },
+
+      periods: {
+        type: [PeriodSchema],
+        required: true,
+        validate: {
+          validator: (
+            periods: IPeriod[]
+          ) =>
+            periods.length === 7,
+
+          message:
+            "Each day must contain exactly 7 periods.",
+        },
+      },
+    },
+    {
+      _id: false,
+    }
+  );
+
+const TimetableSchema: Schema<ITimetable> =
+  new Schema(
+    {
+      facultyId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        unique: true,
+      },
+
+      college: {
+        type: String,
+        required: true,
+      },
+
+      schedule: {
+        type: [DayScheduleSchema],
+        required: true,
+
+        validate: {
+          validator: (
+            schedule: IDaySchedule[]
+          ) =>
+            schedule.length === 6,
+
+          message:
+            "Timetable must contain Monday to Saturday.",
+        },
+      },
     },
 
-    date: {
-      type: Date,
-      required: true,
-    },
+    {
+      timestamps: true,
+    }
+  );
 
-    day: {
-      type: String,
-      required: true,
-    },
+const Timetable: Model<ITimetable> =
+  mongoose.model<ITimetable>(
+    "Timetable",
+    TimetableSchema
+  );
 
-    periodNumber: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 7,
-    },
-
-    subject: {
-      type: String,
-      required: true,
-    },
-
-    className: {
-      type: String,
-      required: true,
-    },
-
-    room: {
-      type: String,
-    },
-
-    completionTimestamp: {
-      type: Date,
-    },
-
-    status: {
-      type: String,
-      enum: ["Present", "Absent", "Free"],
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
-const Attendance: Model<IAttendance> = mongoose.model<IAttendance>(
-  "Attendance",
-  AttendanceSchema
-);
-
-export default Attendance;
+export default Timetable;

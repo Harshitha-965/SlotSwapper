@@ -25,6 +25,7 @@ const MondayRotationSchema: Schema<IMondayRotation> = new Schema(
         "Thursday",
         "Friday",
         "Saturday",
+        
       ],
       required: true,
     },
