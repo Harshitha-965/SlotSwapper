@@ -7,7 +7,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth";
 import eventRoutes from "./routes/eventRoutes";
 import swapRequestRoutes from "./routes/swapRequestRoutes"; // ✅ add this line
-
+import adminRoutes from "./routes/adminRoutes";
 
 
 // ✅ Load environment variables
@@ -30,6 +30,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/requests", swapRequestRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ✅ Health check route
 app.get("/", (req: Request, res: Response) => {
