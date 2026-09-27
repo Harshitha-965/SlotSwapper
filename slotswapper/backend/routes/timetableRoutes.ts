@@ -329,19 +329,13 @@ const syncFacultyScheduleEvents =
           );
 
         const overrideSubject =
-          slotOverride?.subject ||
-          period.subject ||
-          "";
+          period.subject || "";
 
         const overrideClassName =
-          slotOverride?.className ||
-          period.className ||
-          "";
+          period.className || "";
 
         const overrideRoom =
-          slotOverride?.room ||
-          period.room ||
-          "";
+          period.room || "";
 
         const date = new Date(
           weekStart
@@ -562,25 +556,19 @@ const buildSchedule =
                         );
 
                 const resolvedSubject =
-                  slotOverride
-                    ? slotOverride.subject ?? ""
-                    : isFree
-                      ? ""
-                      : period.subject;
+                  isFree
+                    ? ""
+                    : period.subject ?? "";
 
                 const resolvedClass =
-                  slotOverride
-                    ? slotOverride.className ?? ""
-                    : isFree
-                      ? ""
-                      : period.className;
+                  isFree
+                    ? ""
+                    : period.className ?? "";
 
                 const resolvedRoom =
-                  slotOverride
-                    ? slotOverride.room ?? ""
-                    : isFree
-                      ? ""
-                      : period.room || "";
+                  isFree
+                    ? ""
+                    : period.room || "";
 
                 return {
                   id: `${actualDay}-${period.periodNumber}`,

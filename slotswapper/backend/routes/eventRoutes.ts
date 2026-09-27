@@ -106,17 +106,25 @@ router.get("/marketplace", async (req: Request, res: Response) => {
       .sort({ start: 1 })
       .lean();
 
-    const sanitizedEvents = swappableEvents.map((event: any) => ({
-      ...event,
-      ownerName:
-        typeof event.ownerId === "object" && event.ownerId
-          ? event.ownerId.name || event.ownerName
-          : event.ownerName,
-      ownerId:
-        typeof event.ownerId === "object" && event.ownerId
-          ? event.ownerId._id || event.ownerId
-          : event.ownerId,
-    }));
+    const sanitizedEvents = swappableEvents
+      .filter((event: any) => {
+        if (!event.start || !event.status) return false;
+        if (!marketplaceStatuses.includes(event.status)) return false;
+        const eventDate = new Date(event.start);
+        if (Number.isNaN(eventDate.getTime())) return false;
+        return eventDate >= currentWeekStart && eventDate < nextWeekStart;
+      })
+      .map((event: any) => ({
+        ...event,
+        ownerName:
+          typeof event.ownerId === "object" && event.ownerId
+            ? event.ownerId.name || event.ownerName
+            : event.ownerName,
+        ownerId:
+          typeof event.ownerId === "object" && event.ownerId
+            ? event.ownerId._id || event.ownerId
+            : event.ownerId,
+      }));
 
     res.status(200).json(sanitizedEvents);
   } catch (err) {

@@ -61,9 +61,6 @@ const academicDays: AcademicDay[] = [
   "Saturday",
 ];
 
-
-
-
 const createEmptyTimetable = (): DaySchedule[] => {
   return academicDays.map(
     (day) => ({
