@@ -95,6 +95,18 @@ const Marketplace: React.FC = () => {
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilter>("All");
 
+  const getCurrentWeekRange = () => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setHours(0, 0, 0, 0);
+    const day = monday.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    monday.setDate(monday.getDate() + diff);
+    const nextWeek = new Date(monday);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    return { monday, nextWeek };
+  };
+
   /* =========================================
      FETCH MARKETPLACE EVENTS
   ========================================= */
@@ -133,50 +145,58 @@ const Marketplace: React.FC = () => {
           const data =
             await response.json();
 
+          const { monday, nextWeek } = getCurrentWeekRange();
+
           const mapped: MarketEvent[] =
-            data.map(
-              (event: any) => ({
-                id: event._id,
-
-                title:
-                  event.title ||
-                  event.subject ||
-                  "Untitled Event",
-
-                start:
-                  event.start,
-
-                end:
-                  event.end,
-
-                status:
-                  event.status ||
-                  "Swappable",
-
-                ownerId:
-                  event.ownerId,
-
-                ownerName:
-                  event.ownerName,
-
-                subject:
-                  event.subject ||
-                  event.title,
-
-                day:
-                  event.day,
-
-                periodNumber:
-                  event.periodNumber,
-
-                className:
-                  event.className ||
-                  event.class,
-
-                room:
-                  event.room,
+            data
+              .filter((event: any) => {
+                if (!event.start) return false;
+                const eventDate = new Date(event.start);
+                return eventDate >= monday && eventDate < nextWeek;
               })
-            );
+              .map(
+                (event: any) => ({
+                  id: event._id,
+
+                  title:
+                    event.title ||
+                    event.subject ||
+                    "Untitled Event",
+
+                  start:
+                    event.start,
+
+                  end:
+                    event.end,
+
+                  status:
+                    event.status ||
+                    "Swappable",
+
+                  ownerId:
+                    event.ownerId,
+
+                  ownerName:
+                    event.ownerName,
+
+                  subject:
+                    event.subject ||
+                    event.title,
+
+                  day:
+                    event.day,
+
+                  periodNumber:
+                    event.periodNumber,
+
+                  className:
+                    event.className ||
+                    event.class,
+
+                  room:
+                    event.room,
+                })
+              );
 
           setEvents(
             mapped
@@ -237,13 +257,16 @@ const Marketplace: React.FC = () => {
           const data =
             await response.json();
 
+          const { monday, nextWeek } = getCurrentWeekRange();
+
           const swappable =
             data
-              .filter(
-                (event: any) =>
-                  event.status ===
-                  "Swappable"
-              )
+              .filter((event: any) => {
+                if (event.status !== "Swappable") return false;
+                if (!event.start) return false;
+                const eventDate = new Date(event.start);
+                return eventDate >= monday && eventDate < nextWeek;
+              })
               .map(
                 (event: any) => ({
                   id:
@@ -391,6 +414,8 @@ const Marketplace: React.FC = () => {
           .trim()
           .toLowerCase();
 
+      const { monday, nextWeek } = getCurrentWeekRange();
+
       return events.filter(
         (event) => {
           const title =
@@ -407,6 +432,19 @@ const Marketplace: React.FC = () => {
               event.ownerName ||
               ""
             ).toLowerCase();
+
+          const eventStart =
+            event.start
+              ? new Date(
+                  event.start
+                )
+              : null;
+
+          const matchesCurrentWeek =
+            eventStart instanceof Date &&
+            !isNaN(eventStart.getTime()) &&
+            eventStart >= monday &&
+            eventStart < nextWeek;
 
           const matchesSearch =
             !search ||
@@ -473,6 +511,7 @@ const Marketplace: React.FC = () => {
           }
 
           return (
+            matchesCurrentWeek &&
             matchesSearch &&
             matchesDay &&
             matchesSubject &&

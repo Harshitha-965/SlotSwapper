@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import SwapRequest from "../models/SwapRequest";
 import Event from "../models/Event";
+import WeeklySlotState from "../models/WeeklySlotState";
 import { JwtPayload } from "../types/JwtPayload";
 
 const router = Router();
@@ -187,13 +188,31 @@ router.patch("/:id/accept", verifyToken, async (req: Request, res: Response) => 
     if (String(request.responderId) !== String((req as any).userId))
       return res.status(403).json({ message: "Not authorized" });
 
-    // ✅ Fetch both involved events
-    const offeredEvent = await Event.findById(request.offeredSlot.eventId);
-    const requestedEvent = await Event.findById(request.requestedSlot.eventId);
+    const resolveLiveEvent = async (slot: any, ownerId: string) => {
+      const directMatch = await Event.findById(slot?.eventId);
+      if (directMatch) return directMatch;
+
+      if (!slot?.start || !slot?.end || !slot?.title) {
+        return null;
+      }
+
+      return Event.findOne({
+        ownerId,
+        title: slot.title,
+        start: slot.start,
+        end: slot.end,
+      });
+    };
+
+    const offeredEvent = await resolveLiveEvent(request.offeredSlot, String(request.requesterId));
+    const requestedEvent = await resolveLiveEvent(request.requestedSlot, String(request.responderId));
 
     if (!offeredEvent || !requestedEvent) {
       return res.status(404).json({ message: "One or both events not found" });
     }
+
+    request.offeredSlot.eventId = offeredEvent._id as typeof request.offeredSlot.eventId;
+    request.requestedSlot.eventId = requestedEvent._id as typeof request.requestedSlot.eventId;
 
     if (
       String(offeredEvent.ownerId) !== String(request.requesterId) ||
@@ -214,6 +233,22 @@ router.patch("/:id/accept", verifyToken, async (req: Request, res: Response) => 
     // ✅ Both events become Busy after swap
     offeredEvent.status = "Busy";
     requestedEvent.status = "Busy";
+
+    const currentWeekStart = new Date();
+    currentWeekStart.setHours(0, 0, 0, 0);
+    const dayOffset = currentWeekStart.getDay() === 0 ? -6 : 1 - currentWeekStart.getDay();
+    currentWeekStart.setDate(currentWeekStart.getDate() + dayOffset);
+
+    const syncWeeklyState = async (facultyId: string, day: string, periodNumber: number) => {
+      const state = await WeeklySlotState.findOne({ facultyId, weekStart: currentWeekStart });
+      if (!state) return;
+      const slot = state.slots.find((entry) => entry.day === day && entry.periodNumber === periodNumber);
+      if (slot) slot.status = "Busy";
+      await state.save();
+    };
+
+    await syncWeeklyState(String(request.requesterId), offeredEvent.day || "Monday", offeredEvent.periodNumber || 1);
+    await syncWeeklyState(String(request.responderId), requestedEvent.day || "Monday", requestedEvent.periodNumber || 1);
 
     await offeredEvent.save();
     await requestedEvent.save();

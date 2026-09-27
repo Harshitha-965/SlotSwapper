@@ -54,6 +54,8 @@ const App: React.FC = () => {
     const userString = localStorage.getItem("user");
 
     if (!token || !userString) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setIsAuthenticated(false);
       return;
     }

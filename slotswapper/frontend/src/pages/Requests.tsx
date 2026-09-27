@@ -331,8 +331,17 @@ const Requests: React.FC<
           );
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+
+          console.error(
+            "Accept request backend error:",
+            response.status,
+            errorData
+          );
+
           throw new Error(
-            "Failed to delete request"
+            errorData?.message ||
+              `Failed to accept request (${response.status})`
           );
         }
 

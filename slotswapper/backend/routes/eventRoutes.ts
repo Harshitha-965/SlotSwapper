@@ -8,6 +8,16 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key_here";
 
 const marketplaceStatuses = ["Swappable", "Emergency", "Free"];
 
+const getCurrentWeekStart = () => {
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setHours(0, 0, 0, 0);
+  const day = monday.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  monday.setDate(monday.getDate() + diff);
+  return monday;
+};
+
 /** ✅ Middleware to verify JWT token */
 const verifyToken = (req: Request, res: Response, next: Function) => {
   const authHeader = req.headers.authorization;
@@ -78,7 +88,17 @@ router.get("/marketplace", async (req: Request, res: Response) => {
       }
     }
 
-    const filter: any = { status: { $in: marketplaceStatuses } };
+    const currentWeekStart = getCurrentWeekStart();
+    const nextWeekStart = new Date(currentWeekStart);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+
+    const filter: any = {
+      status: { $in: marketplaceStatuses },
+      start: {
+        $gte: currentWeekStart.toISOString(),
+        $lt: nextWeekStart.toISOString(),
+      },
+    };
     if (excludeOwnerId) filter.ownerId = { $ne: excludeOwnerId };
 
     const swappableEvents = await Event.find(filter)
