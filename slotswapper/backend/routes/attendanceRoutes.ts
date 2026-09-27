@@ -237,7 +237,6 @@ router.get(
             $gte: today,
             $lt: tomorrow,
           },
-
           status: "Present",
         })
           .sort({
@@ -258,6 +257,61 @@ router.get(
         message:
           "Error fetching today's attendance",
       });
+    }
+  }
+);
+
+router.get(
+  "/history",
+  verifyFaculty,
+  async (
+    req: Request,
+    res: Response
+  ) => {
+    try {
+      const { status, search, from, to } = req.query;
+      const filter: any = {
+        facultyId: (req as any).userId,
+      };
+
+      if (status && status !== "all") {
+        filter.status = status;
+      }
+
+      if (from || to) {
+        filter.date = {};
+
+        if (from) {
+          filter.date.$gte = new Date(`${from}T00:00:00`);
+        }
+
+        if (to) {
+          filter.date.$lte = new Date(`${to}T23:59:59`);
+        }
+      }
+
+      const records = await Attendance.find(filter)
+        .sort({ date: -1, periodNumber: 1 })
+        .lean();
+
+      const query = String(search || "").trim().toLowerCase();
+      const filtered = query
+        ? records.filter((record: any) => {
+            const subject = String(record.subject || "").toLowerCase();
+            const className = String(record.className || "").toLowerCase();
+            const room = String(record.room || "").toLowerCase();
+            return (
+              subject.includes(query) ||
+              className.includes(query) ||
+              room.includes(query)
+            );
+          })
+        : records;
+
+      res.json(filtered);
+    } catch (err) {
+      console.error("Error fetching attendance history:", err);
+      res.status(500).json({ message: "Error fetching attendance history" });
     }
   }
 );

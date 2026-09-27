@@ -95,36 +95,6 @@ const Marketplace: React.FC = () => {
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilter>("All");
 
-  const [userCollege, setUserCollege] =
-    useState("");
-
-  /* =========================================
-     LOAD USER DETAILS
-  ========================================= */
-
-  useEffect(() => {
-    const storedUser =
-      localStorage.getItem("user");
-
-    if (!storedUser) {
-      return;
-    }
-
-    try {
-      const user =
-        JSON.parse(storedUser);
-
-      setUserCollege(
-        user.college || ""
-      );
-    } catch (err) {
-      console.error(
-        "Failed to parse user:",
-        err
-      );
-    }
-  }, []);
-
   /* =========================================
      FETCH MARKETPLACE EVENTS
   ========================================= */
@@ -797,19 +767,17 @@ const Marketplace: React.FC = () => {
           </p>
         )}
 
-        {!isFree && (
-          <button
-            type="button"
-            className="event-toggle-btn"
-            onClick={() =>
-              handleRequestSwap(
-                event
-              )
-            }
-          >
-            Request Swap
-          </button>
-        )}
+        <button
+          type="button"
+          className="event-toggle-btn"
+          onClick={() =>
+            handleRequestSwap(
+              event
+            )
+          }
+        >
+          Request Swap
+        </button>
       </div>
     );
   };
@@ -908,40 +876,8 @@ const Marketplace: React.FC = () => {
           </h1>
 
           <p>
-            Browse available swap opportunities and free slots
-            {userCollege
-              ? ` at ${userCollege}`
-              : ""}
+            Available swap opportunities and free slots
           </p>
-        </div>
-
-        {/* =================================
-            COLLEGE INFORMATION
-        ================================= */}
-
-        <div className="marketplace-info-banner">
-          <div className="marketplace-info-icon">
-            ℹ️
-          </div>
-
-          <div>
-            <h3>
-              College-Specific Marketplace
-            </h3>
-
-            <p>
-              You can only see and
-              request swaps from
-              faculty at{" "}
-              <strong>
-                {userCollege ||
-                  "your college"}
-              </strong>
-              . Events from other
-              colleges are not
-              visible.
-            </p>
-          </div>
         </div>
 
         {/* =================================

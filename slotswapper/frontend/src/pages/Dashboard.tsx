@@ -568,30 +568,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </>
         )}
 
-        <div className="faculty-tips-card">
-          <h3>
-            Quick Tips
-          </h3>
-
-          <p>
-            • Mark Completed becomes
-            active immediately after
-            the class ends and remains
-            available for 10 minutes.
-          </p>
-
-          <p>
-            • Attendance is automatically
-            saved when you mark a class
-            completed.
-          </p>
-
-          <p>
-            • Go to My Events to manage
-            Busy, Swappable and Emergency
-            availability.
-          </p>
-        </div>
       </div>
     </FacultyLayout>
   );

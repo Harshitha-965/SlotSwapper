@@ -7,6 +7,8 @@ import {
 import jwt from "jsonwebtoken";
 
 import Timetable from "../models/Timetable";
+import Event from "../models/Event";
+import User from "../models/User";
 import WeeklySlotState, {
   SlotStatus,
 } from "../models/WeeklySlotState";
@@ -193,6 +195,203 @@ const getSlotStatus =
       slot?.status ||
       "Busy"
     );
+  };
+
+const syncFacultyScheduleEvents =
+  async (facultyId: string) => {
+    const timetable =
+      await Timetable.findOne({
+        facultyId,
+      }).lean();
+
+    if (!timetable) {
+      return;
+    }
+
+    const weekStart =
+      getWeekStart();
+    const mondayOrder =
+      await getMondayRotation(
+        weekStart
+      );
+    const nextWeek = new Date(weekStart);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    await Event.deleteMany({
+      ownerId: facultyId,
+      start: {
+        $gte: weekStart.toISOString(),
+        $lt: nextWeek.toISOString(),
+      },
+    });
+
+    const weeklyState =
+      await WeeklySlotState.findOne(
+        {
+          facultyId,
+          weekStart,
+        }
+      ).lean();
+
+    const owner =
+      await User.findById(facultyId)
+        .select("name")
+        .lean();
+
+    const getResolvedStatus = (
+      day: AcademicDay,
+      periodNumber: number,
+      isFree: boolean
+    ): SlotStatus | "Free" => {
+      if (isFree) {
+        return "Free";
+      }
+
+      const slot =
+        weeklyState?.slots.find(
+          (item) =>
+            item.day === day &&
+            item.periodNumber ===
+              periodNumber
+        );
+
+      return (
+        slot?.status || "Busy"
+      );
+    };
+
+    const getEffectiveSourceDay = (
+      day: AcademicDay
+    ): AcademicDay => {
+      if (day === "Monday" && mondayOrder) {
+        return mondayOrder;
+      }
+
+      return day;
+    };
+
+    for (const daySchedule of timetable.schedule) {
+      const effectiveDay =
+        daySchedule.day === "Monday"
+          ? "Monday"
+          : daySchedule.day;
+      const sourceDay =
+        getEffectiveSourceDay(
+          daySchedule.day
+        );
+      const sourceSchedule =
+        timetable.schedule.find(
+          (item) =>
+            item.day === sourceDay
+        );
+
+      if (!sourceSchedule) {
+        continue;
+      }
+
+      for (const period of sourceSchedule.periods) {
+        const isFree =
+          !period.subject?.trim() ||
+          !period.className?.trim();
+
+        const resolvedStatus =
+          getResolvedStatus(
+            effectiveDay,
+            period.periodNumber,
+            isFree
+          );
+
+        const date = new Date(
+          weekStart
+        );
+
+        date.setDate(
+          weekStart.getDate() +
+            academicDays.indexOf(
+              effectiveDay
+            )
+        );
+
+        const [startHour, startMinute] =
+          period.startTime
+            .split(":")
+            .map(Number);
+
+        const [endHour, endMinute] =
+          period.endTime
+            .split(":")
+            .map(Number);
+
+        const start = new Date(
+          date
+        );
+
+        start.setHours(
+          startHour,
+          startMinute,
+          0,
+          0
+        );
+
+        const end = new Date(
+          date
+        );
+
+        end.setHours(
+          endHour,
+          endMinute,
+          0,
+          0
+        );
+
+        await Event.findOneAndUpdate(
+          {
+            ownerId: facultyId,
+            day: effectiveDay,
+            periodNumber:
+              period.periodNumber,
+            start: start.toISOString(),
+            end: end.toISOString(),
+          },
+          {
+            ownerId: facultyId,
+            ownerName:
+              owner?.name ||
+              "Faculty",
+            title:
+              isFree
+                ? "Free Period"
+                : period.subject ||
+                  "Class",
+            start:
+              start.toISOString(),
+            end:
+              end.toISOString(),
+            status:
+              resolvedStatus,
+            day:
+              effectiveDay,
+            periodNumber:
+              period.periodNumber,
+            subject:
+              period.subject ||
+              "",
+            className:
+              period.className ||
+              "",
+            room:
+              period.room ||
+              "",
+          },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true,
+            runValidators: true,
+          }
+        );
+      }
+    }
   };
 
 /*
@@ -383,6 +582,10 @@ router.get(
     res: Response
   ) => {
     try {
+      await syncFacultyScheduleEvents(
+        (req as any).userId
+      );
+
       const result =
         await buildSchedule(
           (req as any).userId
@@ -812,6 +1015,10 @@ router.patch(
       }
 
       await weeklyState.save();
+
+      await syncFacultyScheduleEvents(
+        facultyId
+      );
 
       const result =
         await buildSchedule(

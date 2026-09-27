@@ -12,7 +12,7 @@ import {
   Building2,
   Search,
   Download,
-  Info,
+  AlertCircle,
 } from "lucide-react";
 
 import FacultyLayout from "../components/FacultyLayout.tsx";
@@ -272,6 +272,158 @@ const Settings: React.FC<
         );
       }, 2500);
     };
+
+  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceFilterStatus, setAttendanceFilterStatus] = useState("all");
+  const [attendanceSearch, setAttendanceSearch] = useState("");
+  const [attendanceFrom, setAttendanceFrom] = useState("");
+  const [attendanceTo, setAttendanceTo] = useState("");
+  const [attendanceError, setAttendanceError] = useState("");
+
+  const [reportHistory, setReportHistory] = useState<any[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportFilterStatus, setReportFilterStatus] = useState("all");
+  const [reportSearch, setReportSearch] = useState("");
+  const [reportError, setReportError] = useState("");
+
+  const formatDate = (value?: string | Date) => {
+    if (!value) return "";
+
+    try {
+      return new Date(value).toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch {
+      return String(value);
+    }
+  };
+
+  const downloadCsv = (filename: string, rows: string[][]) => {
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  useEffect(() => {
+    if (activeTab !== "attendance") return;
+
+    const loadAttendance = async () => {
+      try {
+        setAttendanceLoading(true);
+        setAttendanceError("");
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setAttendanceError("Authentication required");
+          return;
+        }
+
+        const params = new URLSearchParams();
+        if (attendanceFilterStatus !== "all") params.set("status", attendanceFilterStatus);
+        if (attendanceSearch.trim()) params.set("search", attendanceSearch.trim());
+        if (attendanceFrom) params.set("from", attendanceFrom);
+        if (attendanceTo) params.set("to", attendanceTo);
+
+        const response = await fetch(`http://localhost:5000/api/attendance/history?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Failed to load attendance history");
+
+        setAttendanceHistory(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load attendance history:", err);
+        setAttendanceError(err instanceof Error ? err.message : "Unable to load attendance history");
+      } finally {
+        setAttendanceLoading(false);
+      }
+    };
+
+    loadAttendance();
+  }, [activeTab, attendanceFilterStatus, attendanceSearch, attendanceFrom, attendanceTo]);
+
+  useEffect(() => {
+    if (activeTab !== "reports") return;
+
+    const loadReports = async () => {
+      try {
+        setReportLoading(true);
+        setReportError("");
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setReportError("Authentication required");
+          return;
+        }
+
+        const params = new URLSearchParams();
+        if (reportFilterStatus !== "all") params.set("status", reportFilterStatus);
+        if (reportSearch.trim()) params.set("search", reportSearch.trim());
+
+        const response = await fetch(`http://localhost:5000/api/requests/reports?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Failed to load reports");
+
+        setReportHistory(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load reports:", err);
+        setReportError(err instanceof Error ? err.message : "Unable to load reports");
+      } finally {
+        setReportLoading(false);
+      }
+    };
+
+    loadReports();
+  }, [activeTab, reportFilterStatus, reportSearch]);
+
+  const exportAttendanceCsv = () => {
+    const rows = [
+      ["Date", "Day", "Period", "Subject", "Class", "Room", "Status", "Completion Time"],
+      ...attendanceHistory.map((record) => [
+        new Date(record.date).toLocaleDateString(),
+        record.day || "",
+        record.periodNumber ?? "",
+        record.subject || "",
+        record.className || "",
+        record.room || "",
+        record.status || "",
+        record.completionTimestamp ? formatDate(record.completionTimestamp) : "",
+      ]),
+    ];
+
+    downloadCsv("faculty-attendance-history.csv", rows);
+  };
+
+  const exportReportsCsv = () => {
+    const rows = [
+      ["Action", "Requester", "Responder", "Offered Slot", "Requested Slot", "Status", "Timestamp"],
+      ...reportHistory.map((record) => [
+        record.action || "",
+        record.requesterName || "",
+        record.responderName || "",
+        `${record.offeredSlot?.title || ""} (${record.offeredSlot?.start || ""} - ${record.offeredSlot?.end || ""})`,
+        `${record.requestedSlot?.title || ""} (${record.requestedSlot?.start || ""} - ${record.requestedSlot?.end || ""})`,
+        record.status || "",
+        formatDate(record.createdAt),
+      ]),
+    ];
+
+    downloadCsv("faculty-swap-reports.csv", rows);
+  };
 
 
   /* =====================================================
@@ -1003,43 +1155,6 @@ const Settings: React.FC<
             </div>
 
 
-            <div className="settings-timetable-info">
-
-              <Info
-                size={21}
-              />
-
-              <div>
-                <strong>
-                  Timetable Tips
-                </strong>
-
-                <p>
-                  • Configure Monday
-                  through Saturday
-                </p>
-
-                <p>
-                  • Each day contains
-                  exactly 7 periods
-                </p>
-
-                <p>
-                  • Leave Subject and
-                  Class empty for a
-                  free period
-                </p>
-
-                <p>
-                  • This timetable is
-                  saved once and reused
-                  throughout the system
-                </p>
-              </div>
-
-            </div>
-
-
             <div className="settings-day-tabs">
 
               {academicDays.map(
@@ -1290,7 +1405,8 @@ const Settings: React.FC<
               <button
                 type="button"
                 className="settings-export-btn"
-                disabled
+                onClick={exportAttendanceCsv}
+                disabled={attendanceLoading || attendanceHistory.length === 0}
               >
                 <Download
                   size={17}
@@ -1312,16 +1428,17 @@ const Settings: React.FC<
 
                 <input
                   type="text"
+                  value={attendanceSearch}
+                  onChange={(event) => setAttendanceSearch(event.target.value)}
                   placeholder="Search by subject or class..."
-                  disabled
                 />
 
               </div>
 
 
               <select
-                disabled
-                defaultValue="all"
+                value={attendanceFilterStatus}
+                onChange={(event) => setAttendanceFilterStatus(event.target.value)}
               >
                 <option value="all">
                   All Status
@@ -1334,34 +1451,88 @@ const Settings: React.FC<
                 <option value="Absent">
                   Absent
                 </option>
+
+                <option value="Free">
+                  Free
+                </option>
               </select>
 
-            </div>
-
-
-            <div className="settings-empty-report">
-
-              <FileText
-                size={60}
+              <input
+                type="date"
+                value={attendanceFrom}
+                onChange={(event) => setAttendanceFrom(event.target.value)}
               />
 
-              <h3>
-                Attendance History
-              </h3>
-
-              <p>
-                Your complete attendance
-                table and PDF/CSV export
-                will appear here.
-              </p>
-
-              <small>
-                Attendance history API
-                integration is the next
-                step.
-              </small>
+              <input
+                type="date"
+                value={attendanceTo}
+                onChange={(event) => setAttendanceTo(event.target.value)}
+              />
 
             </div>
+
+            {attendanceLoading ? (
+              <div className="settings-empty-report">
+                <h3>Loading attendance...</h3>
+              </div>
+            ) : attendanceError ? (
+              <div className="settings-empty-report">
+                <AlertCircle size={52} />
+                <h3>Unable to load attendance</h3>
+                <p>{attendanceError}</p>
+              </div>
+            ) : attendanceHistory.length === 0 ? (
+              <div className="settings-empty-report">
+
+                <FileText
+                  size={60}
+                />
+
+                <h3>
+                  Attendance History
+                </h3>
+
+                <p>
+                  No attendance matches your current filters.
+                </p>
+
+              </div>
+            ) : (
+              <div className="settings-report-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Day</th>
+                      <th>Period</th>
+                      <th>Subject</th>
+                      <th>Class</th>
+                      <th>Room</th>
+                      <th>Status</th>
+                      <th>Marked At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceHistory.map((record) => (
+                      <tr key={`${record._id || record.date}-${record.periodNumber}`}>
+                        <td>{new Date(record.date).toLocaleDateString()}</td>
+                        <td>{record.day}</td>
+                        <td>{record.periodNumber}</td>
+                        <td>{record.subject || "—"}</td>
+                        <td>{record.className || "—"}</td>
+                        <td>{record.room || "—"}</td>
+                        <td>
+                          <span className={`admin-status ${record.status === "Present" ? "present" : record.status === "Absent" ? "absent" : "free"}`}>
+                            {record.status}
+                          </span>
+                        </td>
+                        <td>{record.completionTimestamp ? formatDate(record.completionTimestamp) : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
           </section>
         )}
@@ -1391,7 +1562,8 @@ const Settings: React.FC<
               <button
                 type="button"
                 className="settings-export-btn"
-                disabled
+                onClick={exportReportsCsv}
+                disabled={reportLoading || reportHistory.length === 0}
               >
                 <Download
                   size={17}
@@ -1399,30 +1571,6 @@ const Settings: React.FC<
 
                 Export CSV
               </button>
-
-            </div>
-
-
-            <div className="settings-audit-banner">
-
-              <div className="settings-audit-icon">
-                🔐
-              </div>
-
-              <div>
-
-                <strong>
-                  Permanent Audit Trail
-                </strong>
-
-                <p>
-                  Swap activities are
-                  recorded for
-                  administrative review
-                  and audit purposes.
-                </p>
-
-              </div>
 
             </div>
 
@@ -1437,27 +1585,24 @@ const Settings: React.FC<
 
                 <input
                   type="text"
+                  value={reportSearch}
+                  onChange={(event) => setReportSearch(event.target.value)}
                   placeholder="Search by faculty or subject..."
-                  disabled
                 />
 
               </div>
 
 
               <select
-                disabled
-                defaultValue="all"
+                value={reportFilterStatus}
+                onChange={(event) => setReportFilterStatus(event.target.value)}
               >
                 <option value="all">
                   All Actions
                 </option>
 
-                <option value="sent">
-                  Sent
-                </option>
-
-                <option value="received">
-                  Received
+                <option value="pending">
+                  Pending
                 </option>
 
                 <option value="accepted">
@@ -1471,30 +1616,72 @@ const Settings: React.FC<
 
             </div>
 
+            {reportLoading ? (
+              <div className="settings-empty-report">
+                <h3>Loading reports...</h3>
+              </div>
+            ) : reportError ? (
+              <div className="settings-empty-report">
+                <AlertCircle size={52} />
+                <h3>Unable to load reports</h3>
+                <p>{reportError}</p>
+              </div>
+            ) : reportHistory.length === 0 ? (
+              <div className="settings-empty-report">
 
-            <div className="settings-empty-report">
+                <FileText
+                  size={60}
+                />
 
-              <FileText
-                size={60}
-              />
+                <h3>
+                  No Activity Records
+                </h3>
 
-              <h3>
-                No Activity Records
-              </h3>
+                <p>
+                  Your swap request activity
+                  and downloadable reports
+                  will appear here.
+                </p>
 
-              <p>
-                Your swap request activity
-                and downloadable reports
-                will appear here.
-              </p>
-
-              <small>
-                Swap activity report
-                integration is the next
-                step.
-              </small>
-
-            </div>
+              </div>
+            ) : (
+              <div className="settings-report-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Direction</th>
+                      <th>Requester</th>
+                      <th>Responder</th>
+                      <th>Offered Slot</th>
+                      <th>Requested Slot</th>
+                      <th>Status</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportHistory.map((record) => (
+                      <tr key={record._id}>
+                        <td>{record.action === "sent" ? "Sent" : "Received"}</td>
+                        <td>{record.requesterName}</td>
+                        <td>{record.responderName}</td>
+                        <td>
+                          <strong>{record.offeredSlot?.title || "—"}</strong>
+                          <small>{record.offeredSlot?.start ? `${record.offeredSlot.start} - ${record.offeredSlot.end}` : ""}</small>
+                        </td>
+                        <td>
+                          <strong>{record.requestedSlot?.title || "—"}</strong>
+                          <small>{record.requestedSlot?.start ? `${record.requestedSlot.start} - ${record.requestedSlot.end}` : ""}</small>
+                        </td>
+                        <td>
+                          <span className={`admin-status ${record.status === "accepted" ? "accepted" : record.status === "rejected" ? "rejected" : "pending"}`}>{record.status}</span>
+                        </td>
+                        <td>{formatDate(record.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
           </section>
         )}

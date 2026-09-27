@@ -31,11 +31,43 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
     const requesterId = (req as any).userId;
     const requesterName = (req as any).userName;
 
+    if (!targetEventId || !offerEventId) {
+      return res.status(400).json({ message: "targetEventId and offerEventId are required" });
+    }
+
+    if (String(targetEventId) === String(offerEventId)) {
+      return res.status(400).json({ message: "A slot cannot request itself" });
+    }
+
     const requestedEvent = await Event.findById(targetEventId);
     const offeredEvent = await Event.findById(offerEventId);
 
-    if (!requestedEvent || !offeredEvent)
+    if (!requestedEvent || !offeredEvent) {
       return res.status(404).json({ message: "Events not found" });
+    }
+
+    if (String(requestedEvent.ownerId) === String(requesterId)) {
+      return res.status(400).json({ message: "You cannot request your own swappable slot" });
+    }
+
+    if (String(offeredEvent.ownerId) !== String(requesterId)) {
+      return res.status(403).json({ message: "You can only offer your own slot" });
+    }
+
+    if (!["Swappable", "Emergency", "Free"].includes(requestedEvent.status)) {
+      return res.status(400).json({ message: "Requested slot is not currently available for swapping" });
+    }
+
+    const duplicate = await SwapRequest.findOne({
+      requesterId,
+      "requestedSlot.eventId": targetEventId,
+      "offeredSlot.eventId": offerEventId,
+      status: "pending",
+    });
+
+    if (duplicate) {
+      return res.status(409).json({ message: "A matching swap request is already pending" });
+    }
 
     const responderId = requestedEvent.ownerId;
     const responderName = requestedEvent.ownerName;
@@ -57,6 +89,7 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
         start: requestedEvent.start,
         end: requestedEvent.end,
       },
+      status: "pending",
     });
 
     await newRequest.save();
@@ -64,6 +97,51 @@ router.post("/", verifyToken, async (req: Request, res: Response) => {
   } catch (err) {
     console.error("Error creating swap request:", err);
     res.status(500).json({ message: "Server error", error: err });
+  }
+});
+
+router.get("/reports", verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { status, search } = req.query;
+
+    const filter: any = {
+      $or: [{ requesterId: userId }, { responderId: userId }],
+    };
+
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+
+    const requests = await SwapRequest.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const searchTerm = String(search || "").trim().toLowerCase();
+    const filtered = searchTerm
+      ? requests.filter((request: any) => {
+          const requester = String(request.requesterName || "").toLowerCase();
+          const responder = String(request.responderName || "").toLowerCase();
+          const offered = String(request.offeredSlot?.title || "").toLowerCase();
+          const requested = String(request.requestedSlot?.title || "").toLowerCase();
+          return (
+            requester.includes(searchTerm) ||
+            responder.includes(searchTerm) ||
+            offered.includes(searchTerm) ||
+            requested.includes(searchTerm)
+          );
+        })
+      : requests;
+
+    const mapped = filtered.map((request: any) => ({
+      ...request,
+      action: String(request.requesterId) === String(userId) ? "sent" : "received",
+    }));
+
+    res.json(mapped);
+  } catch (err) {
+    console.error("Error fetching swap reports:", err);
+    res.status(500).json({ message: "Error fetching swap reports" });
   }
 });
 
@@ -102,6 +180,10 @@ router.patch("/:id/accept", verifyToken, async (req: Request, res: Response) => 
     if (!request)
       return res.status(404).json({ message: "Request not found" });
 
+    if (request.status !== "pending") {
+      return res.status(409).json({ message: "This request has already been processed" });
+    }
+
     if (String(request.responderId) !== String((req as any).userId))
       return res.status(403).json({ message: "Not authorized" });
 
@@ -111,6 +193,13 @@ router.patch("/:id/accept", verifyToken, async (req: Request, res: Response) => 
 
     if (!offeredEvent || !requestedEvent) {
       return res.status(404).json({ message: "One or both events not found" });
+    }
+
+    if (
+      String(offeredEvent.ownerId) !== String(request.requesterId) ||
+      String(requestedEvent.ownerId) !== String(request.responderId)
+    ) {
+      return res.status(409).json({ message: "This swap request is no longer valid" });
     }
 
     // ✅ Perform swap (exchange owners)

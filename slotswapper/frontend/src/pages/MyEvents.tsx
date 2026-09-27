@@ -312,49 +312,6 @@ const MyEvents: React.FC<
           </div>
         </div>
 
-        <div className="faculty-info-card">
-          <div className="faculty-info-icon">
-            ℹ
-          </div>
-
-          <div>
-            <h3>
-              Timetable Management
-            </h3>
-
-            <p>
-              • Click on a day card to
-              expand and view all 7
-              periods
-            </p>
-
-            <p>
-              • Free periods are
-              automatically detected
-              and cannot be modified
-            </p>
-
-            <p>
-              • Mark teaching periods
-              as Swappable to make
-              them available for
-              marketplace
-            </p>
-
-            <p>
-              • Emergency is available
-              only for Swappable
-              periods
-            </p>
-
-            <p>
-              • Monday follows the
-              academic order configured
-              by the administrator
-            </p>
-          </div>
-        </div>
-
         {!schedule.length ? (
           <div className="faculty-empty-card">
             <h2>
@@ -574,79 +531,78 @@ const MyEvents: React.FC<
                                   </div>
                                 </div>
 
-                                {!period.isFree &&
-                                  !isMonday && (
-                                    <div className="faculty-status-controls">
-                                      <button
-                                        disabled={
-                                          saving
-                                        }
-                                        className={
-                                          period.status ===
+                                {!period.isFree && (
+                                  <div className="faculty-status-controls">
+                                    <button
+                                      disabled={
+                                        saving
+                                      }
+                                      className={
+                                        period.status ===
+                                        "Busy"
+                                          ? "selected"
+                                          : ""
+                                      }
+                                      onClick={() =>
+                                        changeStatus(
+                                          period,
+                                          day.day,
                                           "Busy"
-                                            ? "selected"
-                                            : ""
-                                        }
-                                        onClick={() =>
-                                          changeStatus(
-                                            period,
-                                            day.day,
-                                            "Busy"
-                                          )
-                                        }
-                                      >
-                                        Busy
-                                      </button>
+                                        )
+                                      }
+                                    >
+                                      Busy
+                                    </button>
 
-                                      <button
-                                        disabled={
-                                          saving
-                                        }
-                                        className={
-                                          period.status ===
-                                            "Swappable" ||
-                                          period.status ===
-                                            "Emergency"
-                                            ? "selected orange"
-                                            : ""
-                                        }
-                                        onClick={() =>
-                                          changeStatus(
-                                            period,
-                                            day.day,
-                                            "Swappable"
-                                          )
-                                        }
-                                      >
-                                        Swappable
-                                      </button>
-
-                                      <button
-                                        disabled={
-                                          saving ||
-                                          (period.status !==
-                                            "Swappable" &&
-                                            period.status !==
-                                              "Emergency")
-                                        }
-                                        className={
-                                          period.status ===
+                                    <button
+                                      disabled={
+                                        saving
+                                      }
+                                      className={
+                                        period.status ===
+                                          "Swappable" ||
+                                        period.status ===
                                           "Emergency"
-                                            ? "selected red"
-                                            : ""
-                                        }
-                                        onClick={() =>
-                                          changeStatus(
-                                            period,
-                                            day.day,
-                                            "Emergency"
-                                          )
-                                        }
-                                      >
-                                        Emergency
-                                      </button>
-                                    </div>
-                                  )}
+                                          ? "selected orange"
+                                          : ""
+                                      }
+                                      onClick={() =>
+                                        changeStatus(
+                                          period,
+                                          day.day,
+                                          "Swappable"
+                                        )
+                                      }
+                                    >
+                                      Swappable
+                                    </button>
+
+                                    <button
+                                      disabled={
+                                        saving ||
+                                        (period.status !==
+                                          "Swappable" &&
+                                          period.status !==
+                                            "Emergency")
+                                      }
+                                      className={
+                                        period.status ===
+                                        "Emergency"
+                                          ? "selected red"
+                                          : ""
+                                      }
+                                      onClick={() =>
+                                        changeStatus(
+                                          period,
+                                          day.day,
+                                          "Emergency"
+                                        )
+                                      }
+                                    >
+                                      Emergency
+                                    </button>
+                                  </div>
+                                )}
 
                                 {isMonday &&
                                   !period.isFree && (
@@ -683,29 +639,6 @@ const MyEvents: React.FC<
           </div>
         )}
 
-        <div className="faculty-tips-card">
-          <h3>
-            Quick Tips
-          </h3>
-
-          <p>
-            • Mark teaching periods as
-            Swappable to make them
-            available for swapping.
-          </p>
-
-          <p>
-            • Emergency status can be
-            selected only after making a
-            period Swappable.
-          </p>
-
-          <p>
-            • Monday automatically
-            follows the administrator's
-            academic order.
-          </p>
-        </div>
       </div>
     </FacultyLayout>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import LoginSignup from "./pages/LoginSignup.tsx";
@@ -31,13 +31,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   try {
     const user = JSON.parse(userString);
 
-    // Check role if a specific role is required
     if (allowedRole && user.role !== allowedRole) {
-      if (user.role === "Admin") {
-        return <Navigate to="/admin-dashboard" replace />;
-      }
-
-      return <Navigate to="/dashboard" replace />;
+      return user.role === "Admin" ? <Navigate to="/admin-dashboard" replace /> : <Navigate to="/dashboard" replace />;
     }
 
     return children;
@@ -50,53 +45,9 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
 };
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] =
-    useState<boolean | null>(null);
-
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(localStorage.getItem("token")));
 
   const navigate = useNavigate();
-
-  /** Validate token with backend */
-  const validateToken = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setIsAuthenticated(false);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        "http://localhost:5000/api/auth/validate",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-
-        setIsAuthenticated(false);
-      }
-    } catch (err) {
-      console.error("Token validation error:", err);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /** Run token validation on mount */
-  useEffect(() => {
-    validateToken();
-  }, []);
 
   /** Handle login success */
   const handleLogin = () => {
@@ -140,26 +91,6 @@ const App: React.FC = () => {
       replace: true,
     });
   };
-
-  /** Show loading until token validation finishes */
-  if (loading) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background:
-            "radial-gradient(circle at top left, #1a1a1d, #0b0b0d)",
-          color: "#ff7b00",
-          fontFamily: "Poppins, sans-serif",
-        }}
-      >
-        <h2>Loading...</h2>
-      </div>
-    );
-  }
 
   return (
     <Routes>

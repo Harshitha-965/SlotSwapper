@@ -74,42 +74,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* Admin Summary */}
-        <div className="admin-summary-grid">
-          <div className="admin-summary-card">
-            <div className="admin-summary-icon">
-              <Users size={24} />
-            </div>
-
-            <div>
-              <span>Faculty Management</span>
-              <strong>Attendance</strong>
-            </div>
-          </div>
-
-          <div className="admin-summary-card">
-            <div className="admin-summary-icon">
-              <CalendarDays size={24} />
-            </div>
-
-            <div>
-              <span>Weekly Rotation</span>
-              <strong>Monday Order</strong>
-            </div>
-          </div>
-
-          <div className="admin-summary-card">
-            <div className="admin-summary-icon">
-              <Repeat size={24} />
-            </div>
-
-            <div>
-              <span>Faculty Activity</span>
-              <strong>Swap Requests</strong>
-            </div>
-          </div>
-        </div>
-
         {/* Management Sections */}
         <section className="admin-dashboard-section">
           <div className="admin-section-heading">

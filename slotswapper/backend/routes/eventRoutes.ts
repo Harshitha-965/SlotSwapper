@@ -6,6 +6,8 @@ import { JwtPayload } from "../types/JwtPayload"; // optional, if you have this 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key_here";
 
+const marketplaceStatuses = ["Swappable", "Emergency", "Free"];
+
 /** ✅ Middleware to verify JWT token */
 const verifyToken = (req: Request, res: Response, next: Function) => {
   const authHeader = req.headers.authorization;
@@ -76,14 +78,27 @@ router.get("/marketplace", async (req: Request, res: Response) => {
       }
     }
 
-    const filter: any = { status: "Swappable" };
+    const filter: any = { status: { $in: marketplaceStatuses } };
     if (excludeOwnerId) filter.ownerId = { $ne: excludeOwnerId };
 
     const swappableEvents = await Event.find(filter)
       .populate("ownerId", "name email")
-      .sort({ start: 1 });
+      .sort({ start: 1 })
+      .lean();
 
-    res.status(200).json(swappableEvents);
+    const sanitizedEvents = swappableEvents.map((event: any) => ({
+      ...event,
+      ownerName:
+        typeof event.ownerId === "object" && event.ownerId
+          ? event.ownerId.name || event.ownerName
+          : event.ownerName,
+      ownerId:
+        typeof event.ownerId === "object" && event.ownerId
+          ? event.ownerId._id || event.ownerId
+          : event.ownerId,
+    }));
+
+    res.status(200).json(sanitizedEvents);
   } catch (err) {
     console.error("Error fetching marketplace events:", err);
     res
@@ -96,6 +111,10 @@ router.get("/marketplace", async (req: Request, res: Response) => {
 router.patch("/:id", verifyToken, async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
+
+    if (!status || !["Busy", "Swappable", "Emergency", "Free"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
 
     const event = await Event.findById(req.params.id);
     if (!event)

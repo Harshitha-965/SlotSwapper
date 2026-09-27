@@ -96,90 +96,90 @@ const Requests: React.FC<
      FETCH REQUESTS
   ===================================================== */
 
-  useEffect(() => {
-    const fetchRequests =
-      async () => {
-        setLoading(true);
-        setError(null);
+  const fetchRequests =
+    async () => {
+      setLoading(true);
+      setError(null);
 
-        try {
-          const token =
-            localStorage.getItem(
-              "token"
-            );
-
-          if (!token) {
-            setError(
-              "Unauthorized"
-            );
-            return;
-          }
-
-          const [
-            incomingRes,
-            outgoingRes,
-          ] = await Promise.all([
-            fetch(
-              "http://localhost:5000/api/requests/incoming",
-              {
-                headers: {
-                  Authorization:
-                    `Bearer ${token}`,
-                },
-              }
-            ),
-
-            fetch(
-              "http://localhost:5000/api/requests/outgoing",
-              {
-                headers: {
-                  Authorization:
-                    `Bearer ${token}`,
-                },
-              }
-            ),
-          ]);
-
-          if (
-            !incomingRes.ok ||
-            !outgoingRes.ok
-          ) {
-            throw new Error(
-              "Failed to fetch requests"
-            );
-          }
-
-          const incomingData =
-            await incomingRes.json();
-
-          const outgoingData =
-            await outgoingRes.json();
-
-          setIncomingRequests(
-            incomingData
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
           );
 
-          setOutgoingRequests(
-            outgoingData
-          );
-        } catch (
-          err: unknown
-        ) {
-          console.error(
-            "Error fetching swap requests:",
-            err
-          );
-
+        if (!token) {
           setError(
-            err instanceof Error
-              ? err.message
-              : "Error fetching requests"
+            "Unauthorized"
           );
-        } finally {
-          setLoading(false);
+          return;
         }
-      };
 
+        const [
+          incomingRes,
+          outgoingRes,
+        ] = await Promise.all([
+          fetch(
+            "http://localhost:5000/api/requests/incoming",
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          ),
+
+          fetch(
+            "http://localhost:5000/api/requests/outgoing",
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          ),
+        ]);
+
+        if (
+          !incomingRes.ok ||
+          !outgoingRes.ok
+        ) {
+          throw new Error(
+            "Failed to fetch requests"
+          );
+        }
+
+        const incomingData =
+          await incomingRes.json();
+
+        const outgoingData =
+          await outgoingRes.json();
+
+        setIncomingRequests(
+          incomingData
+        );
+
+        setOutgoingRequests(
+          outgoingData
+        );
+      } catch (
+        err: unknown
+      ) {
+        console.error(
+          "Error fetching swap requests:",
+          err
+        );
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Error fetching requests"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  useEffect(() => {
     fetchRequests();
   }, []);
 
@@ -220,19 +220,7 @@ const Requests: React.FC<
           );
         }
 
-        setIncomingRequests(
-          (previous) =>
-            previous.map(
-              (request) =>
-                request._id === id
-                  ? {
-                      ...request,
-                      status:
-                        "accepted",
-                    }
-                  : request
-            )
-        );
+        await fetchRequests();
       } catch (
         err: unknown
       ) {

@@ -4,9 +4,14 @@ export interface IEvent extends Document {
   title: string;
   start: string;
   end: string;
-  status: "Busy" | "Swappable";
+  status: "Busy" | "Swappable" | "Emergency" | "Free";
   ownerId: mongoose.Types.ObjectId;
   ownerName: string;
+  day?: string;
+  periodNumber?: number;
+  subject?: string;
+  className?: string;
+  room?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -18,7 +23,7 @@ const EventSchema: Schema<IEvent> = new Schema(
     end: { type: String, required: true },
     status: {
       type: String,
-      enum: ["Busy", "Swappable"],
+      enum: ["Busy", "Swappable", "Emergency", "Free"],
       default: "Busy",
     },
     ownerId: {
@@ -27,6 +32,11 @@ const EventSchema: Schema<IEvent> = new Schema(
       required: true,
     },
     ownerName: { type: String, required: true },
+    day: { type: String },
+    periodNumber: { type: Number },
+    subject: { type: String },
+    className: { type: String },
+    room: { type: String },
   },
   { timestamps: true }
 );

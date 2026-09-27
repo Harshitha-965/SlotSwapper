@@ -46,7 +46,6 @@ const PeriodSchema =
 
       subject: {
         type: String,
-        required: true,
         default: "",
       },
 
@@ -62,7 +61,6 @@ const PeriodSchema =
 
       className: {
         type: String,
-        required: true,
         default: "",
       },
 
