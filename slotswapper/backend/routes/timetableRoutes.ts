@@ -270,6 +270,17 @@ const syncFacultyScheduleEvents =
       );
     };
 
+    const getSlotOverride = (
+      day: AcademicDay,
+      periodNumber: number
+    ) =>
+      weeklyState?.slots.find(
+        (item) =>
+          item.day === day &&
+          item.periodNumber ===
+            periodNumber
+      );
+
     const getEffectiveSourceDay = (
       day: AcademicDay
     ): AcademicDay => {
@@ -304,12 +315,33 @@ const syncFacultyScheduleEvents =
           !period.subject?.trim() ||
           !period.className?.trim();
 
+        const slotOverride =
+          getSlotOverride(
+            effectiveDay,
+            period.periodNumber
+          );
+
         const resolvedStatus =
           getResolvedStatus(
             effectiveDay,
             period.periodNumber,
             isFree
           );
+
+        const overrideSubject =
+          slotOverride?.subject ||
+          period.subject ||
+          "";
+
+        const overrideClassName =
+          slotOverride?.className ||
+          period.className ||
+          "";
+
+        const overrideRoom =
+          slotOverride?.room ||
+          period.room ||
+          "";
 
         const date = new Date(
           weekStart
@@ -371,7 +403,7 @@ const syncFacultyScheduleEvents =
             title:
               isFree
                 ? "Free Period"
-                : period.subject ||
+                : overrideSubject ||
                   "Class",
             start:
               start.toISOString(),
@@ -384,14 +416,11 @@ const syncFacultyScheduleEvents =
             periodNumber:
               period.periodNumber,
             subject:
-              period.subject ||
-              "",
+              overrideSubject,
             className:
-              period.className ||
-              "",
+              overrideClassName,
             room:
-              period.room ||
-              "",
+              overrideRoom,
           },
           {
             upsert: true,
@@ -462,6 +491,17 @@ const buildSchedule =
       );
     };
 
+    const getSlotOverride = (
+      day: AcademicDay,
+      periodNumber: number
+    ) =>
+      weeklyState?.slots.find(
+        (item) =>
+          item.day === day &&
+          item.periodNumber ===
+            periodNumber
+      );
+
     /*
      * Create a normal day.
      */
@@ -505,6 +545,43 @@ const buildSchedule =
                   !period.subject?.trim() ||
                   !period.className?.trim();
 
+                const slotOverride =
+                  getSlotOverride(
+                    actualDay,
+                    period.periodNumber
+                  );
+
+                const resolvedStatus =
+                  slotOverride
+                    ? slotOverride.status
+                    : isFree
+                      ? "Busy"
+                      : getStatus(
+                          actualDay,
+                          period.periodNumber
+                        );
+
+                const resolvedSubject =
+                  slotOverride
+                    ? slotOverride.subject ?? ""
+                    : isFree
+                      ? ""
+                      : period.subject;
+
+                const resolvedClass =
+                  slotOverride
+                    ? slotOverride.className ?? ""
+                    : isFree
+                      ? ""
+                      : period.className;
+
+                const resolvedRoom =
+                  slotOverride
+                    ? slotOverride.room ?? ""
+                    : isFree
+                      ? ""
+                      : period.room || "";
+
                 return {
                   id: `${actualDay}-${period.periodNumber}`,
 
@@ -518,29 +595,18 @@ const buildSchedule =
                     period.endTime,
 
                   subject:
-                    isFree
-                      ? ""
-                      : period.subject,
+                    resolvedSubject,
 
                   class:
-                    isFree
-                      ? ""
-                      : period.className,
+                    resolvedClass,
 
                   room:
-                    isFree
-                      ? ""
-                      : period.room ||
-                        "",
+                    resolvedRoom,
 
                   isFree,
 
-                  status: isFree
-                    ? "Busy"
-                    : getStatus(
-                        actualDay,
-                        period.periodNumber
-                      ),
+                  status:
+                    resolvedStatus,
                 };
               }
             ),

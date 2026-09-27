@@ -239,16 +239,57 @@ router.patch("/:id/accept", verifyToken, async (req: Request, res: Response) => 
     const dayOffset = currentWeekStart.getDay() === 0 ? -6 : 1 - currentWeekStart.getDay();
     currentWeekStart.setDate(currentWeekStart.getDate() + dayOffset);
 
-    const syncWeeklyState = async (facultyId: string, day: string, periodNumber: number) => {
-      const state = await WeeklySlotState.findOne({ facultyId, weekStart: currentWeekStart });
-      if (!state) return;
-      const slot = state.slots.find((entry) => entry.day === day && entry.periodNumber === periodNumber);
-      if (slot) slot.status = "Busy";
+    const syncWeeklyState = async (
+      facultyId: string,
+      day: string,
+      periodNumber: number,
+      override?: {
+        subject?: string;
+        className?: string;
+        room?: string;
+      }
+    ) => {
+      let state = await WeeklySlotState.findOne({ facultyId, weekStart: currentWeekStart });
+
+      if (!state) {
+        state = new WeeklySlotState({ facultyId, weekStart: currentWeekStart, slots: [] });
+      }
+
+      let slot = state.slots.find((entry) => entry.day === day && entry.periodNumber === periodNumber);
+
+      if (!slot) {
+        slot = {
+          day: day as any,
+          periodNumber,
+          status: "Busy",
+          subject: "",
+          className: "",
+          room: "",
+        };
+        state.slots.push(slot as any);
+      }
+
+      slot.status = "Busy";
+      if (override) {
+        slot.subject = override.subject ?? "";
+        slot.className = override.className ?? "";
+        slot.room = override.room ?? "";
+      }
+
       await state.save();
     };
 
-    await syncWeeklyState(String(request.requesterId), offeredEvent.day || "Monday", offeredEvent.periodNumber || 1);
-    await syncWeeklyState(String(request.responderId), requestedEvent.day || "Monday", requestedEvent.periodNumber || 1);
+    await syncWeeklyState(String(request.requesterId), offeredEvent.day || "Monday", offeredEvent.periodNumber || 1, {
+      subject: requestedEvent.subject || "",
+      className: requestedEvent.className || "",
+      room: requestedEvent.room || "",
+    });
+
+    await syncWeeklyState(String(request.responderId), requestedEvent.day || "Monday", requestedEvent.periodNumber || 1, {
+      subject: offeredEvent.subject || "",
+      className: offeredEvent.className || "",
+      room: offeredEvent.room || "",
+    });
 
     await offeredEvent.save();
     await requestedEvent.save();

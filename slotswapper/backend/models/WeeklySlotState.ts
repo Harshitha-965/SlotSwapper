@@ -20,6 +20,9 @@ export interface IWeeklySlot {
 
   periodNumber: number;
   status: SlotStatus;
+  subject?: string;
+  className?: string;
+  room?: string;
 }
 
 export interface IWeeklySlotState
@@ -63,6 +66,21 @@ const WeeklySlotSchema =
         ],
         required: true,
         default: "Busy",
+      },
+
+      subject: {
+        type: String,
+        default: "",
+      },
+
+      className: {
+        type: String,
+        default: "",
+      },
+
+      room: {
+        type: String,
+        default: "",
       },
     },
     {
