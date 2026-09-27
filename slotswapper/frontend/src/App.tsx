@@ -45,9 +45,50 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
 };
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(localStorage.getItem("token")));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userString = localStorage.getItem("user");
+
+    if (!token || !userString) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    fetch("http://localhost:5000/api/auth/validate", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Invalid token");
+        }
+
+        try {
+          const user = JSON.parse(userString);
+          if (user.role === "Admin" || user.role === "Faculty") {
+            setIsAuthenticated(true);
+          } else {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            setIsAuthenticated(false);
+          }
+        } catch {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setIsAuthenticated(false);
+      });
+  }, []);
 
   /** Handle login success */
   const handleLogin = () => {

@@ -11,6 +11,12 @@ const router = Router();
 const JWT_SECRET =
   process.env.JWT_SECRET || "your_secret_key_here";
 
+const normalizeLocalDate = (value: string | Date) => {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
 /* ================================
    VERIFY ADMIN
 ================================ */
@@ -257,11 +263,13 @@ router.put(
         });
       }
 
+      const normalizedWeekStart = normalizeLocalDate(weekStart);
+
       const rotation =
         await MondayRotation.findOneAndUpdate(
-          { weekStart: new Date(weekStart) },
+          { weekStart: normalizedWeekStart },
           {
-            weekStart: new Date(weekStart),
+            weekStart: normalizedWeekStart,
             mondayOrder,
             setBy: (req as any).userId,
           },
@@ -306,11 +314,11 @@ router.get(
         });
       }
 
+      const normalizedWeekStart = normalizeLocalDate(weekStart as string);
+
       const rotation =
         await MondayRotation.findOne({
-          weekStart: new Date(
-            weekStart as string
-          ),
+          weekStart: normalizedWeekStart,
         }).lean();
 
       res.json(rotation);

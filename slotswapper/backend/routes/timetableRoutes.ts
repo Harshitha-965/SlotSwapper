@@ -139,10 +139,20 @@ const getMondayRotation =
   ): Promise<
     AcademicDay | null
   > => {
+    const normalizedWeekStart =
+      new Date(weekStart);
+    normalizedWeekStart.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
     const rotation =
       await MondayRotation.findOne(
         {
-          weekStart,
+          weekStart:
+            normalizedWeekStart,
         }
       ).lean();
 
