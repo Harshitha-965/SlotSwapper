@@ -651,6 +651,52 @@ const buildSchedule =
  * GET FACULTY TIMETABLE
  */
 router.get(
+  "/permanent",
+  verifyFaculty,
+  async (
+    req: Request,
+    res: Response
+  ) => {
+    try {
+      const timetable =
+        await Timetable.findOne(
+          {
+            facultyId:
+              (req as any).userId,
+          }
+        ).lean();
+
+      if (!timetable) {
+        return res.json({
+          schedule: [],
+          mondayOrder: null,
+          weekStart: getWeekStart(),
+          configured: false,
+        });
+      }
+
+      return res.json({
+        schedule:
+          timetable.schedule,
+        mondayOrder: null,
+        weekStart: getWeekStart(),
+        configured: true,
+      });
+    } catch (err) {
+      console.error(
+        "Error fetching permanent timetable:",
+        err
+      );
+
+      return res.status(500).json({
+        message:
+          "Error fetching permanent timetable",
+      });
+    }
+  }
+);
+
+router.get(
   "/mine",
   verifyFaculty,
   async (

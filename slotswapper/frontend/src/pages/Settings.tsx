@@ -18,7 +18,7 @@ import {
 import FacultyLayout from "../components/FacultyLayout.tsx";
 
 import {
-  getMyTimetable,
+  getPermanentTimetable,
   saveTimetable,
 } from "../api/timetable.ts";
 
@@ -486,7 +486,7 @@ const Settings: React.FC<
           );
 
           const data =
-            await getMyTimetable();
+            await getPermanentTimetable();
 
           if (
             data.configured &&

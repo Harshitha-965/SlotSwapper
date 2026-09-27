@@ -82,6 +82,34 @@ export const getMyTimetable =
   };
 
 /*
+ * GET THE PERMANENT BASE TIMETABLE
+ * FOR SETTINGS ONLY
+ */
+export const getPermanentTimetable =
+  async (): Promise<TimetableResponse> => {
+    const response =
+      await fetch(
+        `${API_URL}/api/timetable/permanent`,
+        {
+          method: "GET",
+          headers: getHeaders(),
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          "Failed to fetch permanent timetable"
+      );
+    }
+
+    return data;
+  };
+
+/*
  * SAVE / UPDATE PERMANENT
  * FACULTY TIMETABLE
  */
